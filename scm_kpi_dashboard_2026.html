@@ -1,56 +1,84 @@
-
-<h2 class="sr-only">SCM KPI 외주생산파트 대시보드 — 월별/주별 발주·이슈 지표 요약</h2>
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCM KPI 대시보드 — 외주생산파트</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  .kpi-dash { font-family: var(--font-sans); padding: 0; }
-  .top-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .top-bar h1 { font-size: 16px; font-weight: 500; margin: 0; color: var(--color-text-primary); }
-  .top-bar .sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 20px; }
+  .kpi-dash { max-width: 1100px; margin: 0 auto; }
+  .top-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e0e0dc; background: #fff; padding: 16px 20px; border-radius: 12px; }
+  .top-bar-title { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+  .top-bar-sub { font-size: 12px; color: #888; margin-top: 2px; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .seg { display: flex; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
-  .seg button { background: transparent; border: none; padding: 6px 14px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); transition: background 0.15s; }
-  .seg button.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
-  select { font-size: 12px; padding: 6px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
-  .card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
-  .card .label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
-  .card .val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.1; }
-  .card .delta { font-size: 11px; margin-top: 3px; }
+  .seg { display: flex; border: 1px solid #d0d0cc; border-radius: 8px; overflow: hidden; }
+  .seg button { background: transparent; border: none; padding: 7px 16px; font-size: 12px; cursor: pointer; color: #888; transition: background 0.15s; font-family: inherit; }
+  .seg button.active { background: #f0f0ec; color: #1a1a1a; font-weight: 600; }
+  select { font-size: 12px; padding: 7px 12px; border: 1px solid #d0d0cc; border-radius: 8px; background: #fff; color: #1a1a1a; cursor: pointer; font-family: inherit; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .card { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid #e8e8e4; }
+  .card .label { font-size: 11px; color: #888; margin-bottom: 5px; }
+  .card .val { font-size: 24px; font-weight: 600; color: #1a1a1a; line-height: 1.1; }
+  .card .delta { font-size: 11px; margin-top: 4px; }
   .card .delta.up { color: #E24B4A; }
   .card .delta.down { color: #1D9E75; }
-  .card .delta.neu { color: var(--color-text-secondary); }
-  .section { margin-bottom: 24px; }
-  .sec-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card .delta.neu { color: #aaa; }
+  .section { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; border: 1px solid #e8e8e4; }
+  .sec-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
   .chart-wrap { position: relative; width: 100%; }
-  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: 11px; color: var(--color-text-secondary); }
-  .legend span { display: flex; align-items: center; gap: 4px; }
-  .legend span b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
-  .person-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 11px; color: #888; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend span b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 580px) { .grid2 { grid-template-columns: 1fr; } }
+  .person-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f0f0ec; font-size: 12px; }
   .person-row:last-child { border-bottom: none; }
-  .person-bar-bg { background: var(--color-background-secondary); border-radius: 3px; height: 6px; flex: 1; margin: 0 10px; }
-  .person-bar { background: #378ADD; height: 6px; border-radius: 3px; transition: width 0.4s; }
-  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: var(--border-radius-md); font-weight: 500; }
-  .badge-warn { background: #FAEEDA; color: #633806; }
-  .badge-ok { background: #EAF3DE; color: #27500A; }
-  .badge-danger { background: #FCEBEB; color: #791F1F; }
+  .person-bar-bg { background: #f0f0ec; border-radius: 3px; height: 6px; flex: 1; margin: 0 12px; }
+  .person-bar { background: #378ADD; height: 6px; border-radius: 3px; transition: width 0.5s ease; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .badge-warn { background: #FEF3CD; color: #7A4D0A; }
+  .badge-ok   { background: #E6F4D7; color: #2A5A0A; }
+  .badge-danger { background: #FDECEA; color: #7A1F1F; }
   .week-table { width: 100%; font-size: 11px; border-collapse: collapse; }
-  .week-table th { text-align: left; color: var(--color-text-secondary); font-weight: 500; padding: 5px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .week-table td { padding: 5px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .week-table th { text-align: left; color: #888; font-weight: 600; padding: 6px 10px; border-bottom: 1px solid #e8e8e4; }
+  .week-table td { padding: 6px 10px; border-bottom: 1px solid #f4f4f0; color: #1a1a1a; }
   .week-table tr:last-child td { border-bottom: none; }
   .week-table td:not(:first-child) { text-align: right; }
   .week-table th:not(:first-child) { text-align: right; }
-  .no-data { color: var(--color-text-secondary); font-size: 12px; padding: 20px; text-align: center; }
-  .alert-box { background: #FAEEDA; border-left: 3px solid #BA7517; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #412402; }
-  .alert-box b { font-weight: 500; display: block; margin-bottom: 2px; }
+  .alert-box { background: #FEF3CD; border-left: 3px solid #BA7517; border-radius: 0 10px 10px 0; padding: 10px 16px; margin-bottom: 14px; font-size: 12px; color: #412402; }
+  .alert-box strong { font-weight: 600; display: block; margin-bottom: 2px; }
+  .loading { text-align: center; padding: 60px 20px; color: #888; font-size: 14px; }
+  .loading .spinner { width: 28px; height: 28px; border: 2px solid #e0e0dc; border-top-color: #378ADD; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: #FDECEA; border: 1px solid #f5c0c0; border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; font-size: 13px; color: #7A1F1F; }
+  .error-box strong { display: block; margin-bottom: 4px; font-weight: 600; }
+  .refresh-btn { font-size: 11px; padding: 5px 12px; border: 1px solid #d0d0cc; border-radius: 7px; background: #fff; cursor: pointer; color: #555; font-family: inherit; }
+  .refresh-btn:hover { background: #f5f5f3; }
+  .last-updated { font-size: 11px; color: #aaa; margin-left: 8px; }
 </style>
-
+</head>
+<body>
 <div class="kpi-dash">
+
+  <!-- 설정값 — 여기만 수정하세요 -->
+  <script>
+    const CONFIG = {
+      SHEET_ID:  '1rIAqlD18gwSTXY50BkXtz_kAJoDIkmmqZpfmFfl7yrQ',
+      API_KEY:   'AIzaSyC8GAEnVBso6rzDxGj_dayLzS4qRnoNfaw',
+      // 읽어올 시트 이름 목록 (탭 이름과 정확히 일치해야 합니다)
+      KPI_SHEET:  'KPI_DASHBOARD',
+      RAW_SHEET:  'KPI_발주_RAW(2026)',
+    };
+  </script>
+
   <div class="top-bar">
     <div>
-      <div style="font-size:16px;font-weight:500;color:var(--color-text-primary);">SCM KPI — 외주생산파트</div>
-      <div class="sub">2026년 구매조달팀 · 자동 집계</div>
+      <div class="top-bar-title">SCM KPI — 외주생산파트</div>
+      <div class="top-bar-sub">2026년 구매조달팀 · Google Sheets 실시간 연동
+        <span class="last-updated" id="lastUpdated"></span>
+      </div>
     </div>
     <div class="controls">
       <div class="seg">
@@ -58,72 +86,236 @@
         <button onclick="setMode('weekly',this)">주별</button>
       </div>
       <select id="periodSel" onchange="render()"></select>
+      <button class="refresh-btn" onclick="loadData()">↺ 새로고침</button>
     </div>
   </div>
 
-  <div id="alertBox"></div>
-  <div class="cards" id="metricCards"></div>
-
-  <div class="section">
-    <div class="sec-title">발주건수 추이</div>
-    <div class="legend">
-      <span><b style="background:#378ADD"></b>발주건수</span>
-      <span><b style="background:#E24B4A"></b>긴급건수</span>
-      <span><b style="background:#EF9F27"></b>미입하</span>
-    </div>
-    <div class="chart-wrap" style="height:200px"><canvas id="orderChart" role="img" aria-label="발주건수, 긴급건수, 미입하 추이 바 차트">발주 KPI 추이 차트</canvas></div>
-  </div>
-
-  <div class="grid2">
-    <div class="section">
-      <div class="sec-title">이슈 분포</div>
-      <div class="legend" id="issueLegend"></div>
-      <div class="chart-wrap" style="height:180px"><canvas id="issueChart" role="img" aria-label="품질/수량/운영 이슈 분포">이슈 분포 차트</canvas></div>
-    </div>
-    <div class="section">
-      <div class="sec-title">담당자별 발주</div>
-      <div id="personList"></div>
+  <div id="mainContent">
+    <div class="loading">
+      <div class="spinner"></div>
+      Google Sheets에서 데이터를 불러오는 중...
     </div>
   </div>
 
-  <div class="section">
-    <div class="sec-title" id="tableTitle">주차별 상세</div>
-    <div id="tableWrap"></div>
-  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+// ─────────────────────────────────────────
+//  Google Sheets API 호출
+// ─────────────────────────────────────────
+async function fetchSheet(sheetName) {
+  const encoded = encodeURIComponent(sheetName);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encoded}?key=${CONFIG.API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `HTTP ${res.status}`);
+  }
+  const json = await res.json();
+  return json.values || [];
+}
 
-const monthlyData = {
-  '1월': { orders:1071, urgent:101, noDeliver:20, quality:49, qty:3, ops:2, failCost:1033780, spend:6100000, persons:{김영준:49,김민정:33,김하은:67,이난영:1,김민지:254,육승미:550,신시어리웨일즈:117} },
-  '2월': { orders:668, urgent:75, noDeliver:5, quality:20, qty:2, ops:1, failCost:321000, spend:3900000, persons:{김영준:27,김민정:21,김하은:29,이난영:0,김민지:137,육승미:376,신시어리웨일즈:78} },
-  '3월': { orders:1155, urgent:151, noDeliver:25, quality:29, qty:3, ops:2, failCost:580000, spend:5800000, persons:{김영준:45,김민정:50,김하은:73,이난영:45,김민지:325,육승미:476,신시어리웨일즈:141} },
-  '4월': { orders:297, urgent:49, noDeliver:2, quality:7, qty:0, ops:0, failCost:80500, spend:1200000, persons:{김영준:5,김민정:14,김하은:13,이난영:32,김민지:135,육승미:44,신시어리웨일즈:53} },
-};
+// 2차원 배열 → 헤더 기준 객체 배열로 변환
+function toObjects(rows) {
+  if (!rows.length) return [];
+  const [headers, ...body] = rows;
+  return body.map(row => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (row[i] ?? '').toString().trim(); });
+    return obj;
+  });
+}
 
-const weeklyData = {
-  'W02 (01.05~01.11)': { orders:282, urgent:13, noDeliver:4, quality:12, qty:1, ops:0, failCost:0, spend:0 },
-  'W03 (01.12~01.18)': { orders:346, urgent:66, noDeliver:9, quality:17, qty:1, ops:1, failCost:80500, spend:0 },
-  'W04 (01.19~01.25)': { orders:235, urgent:16, noDeliver:3, quality:12, qty:1, ops:1, failCost:0, spend:0 },
-  'W05 (01.26~02.01)': { orders:208, urgent:6,  noDeliver:4, quality:8,  qty:0, ops:0, failCost:0, spend:0 },
-  'W06 (02.02~02.08)': { orders:191, urgent:23, noDeliver:2, quality:5,  qty:0, ops:0, failCost:0, spend:0 },
-  'W07 (02.09~02.15)': { orders:185, urgent:19, noDeliver:0, quality:8,  qty:1, ops:0, failCost:0, spend:0 },
-  'W08 (02.16~02.22)': { orders:109, urgent:8,  noDeliver:0, quality:3,  qty:0, ops:0, failCost:0, spend:0 },
-  'W09 (02.23~03.01)': { orders:183, urgent:25, noDeliver:3, quality:4,  qty:1, ops:1, failCost:0, spend:0 },
-  'W10 (03.02~03.08)': { orders:203, urgent:39, noDeliver:4, quality:3,  qty:0, ops:0, failCost:0, spend:0 },
-  'W11 (03.09~03.15)': { orders:259, urgent:7,  noDeliver:7, quality:5,  qty:1, ops:1, failCost:0, spend:0 },
-  'W12 (03.16~03.22)': { orders:218, urgent:33, noDeliver:6, quality:10, qty:1, ops:1, failCost:0, spend:0 },
-  'W13 (03.23~03.29)': { orders:215, urgent:20, noDeliver:4, quality:3,  qty:0, ops:0, failCost:0, spend:0 },
-  'W14 (03.30~04.05)': { orders:260, urgent:52, noDeliver:4, quality:8,  qty:1, ops:0, failCost:0, spend:0 },
-  'W15 (04.06~04.12)': { orders:196, urgent:40, noDeliver:2, quality:7,  qty:0, ops:0, failCost:80500, spend:0 },
-  'W16 (04.13~04.19)': { orders:101, urgent:9,  noDeliver:0, quality:0,  qty:0, ops:0, failCost:0, spend:0 },
-};
+// ─────────────────────────────────────────
+//  KPI 시트 파싱
+//  구조: 행1=컬럼헤더(월/주차), 열1=카테고리, 열2=항목명
+// ─────────────────────────────────────────
+function parseKpiSheet(rows) {
+  if (rows.length < 2) return { monthly: {}, weekly: {} };
 
+  const headerRow = rows[0]; // ['', '', '1월/월누적', '1월/W02', ...]
+  const monthly = {};
+  const weekly  = {};
+
+  // 헤더에서 컬럼 인덱스 → 기간 매핑
+  const colMap = {}; // index → { type: 'monthly'|'weekly', key: '1월'|'W02 ...' }
+  headerRow.forEach((h, i) => {
+    if (i < 2) return;
+    if (!h) return;
+    const parts = h.split('/');
+    if (parts.length < 2) return;
+    const monthPart = parts[0].trim();  // '1월'
+    const periodPart = parts[1].trim(); // '월누적' or '2026.01.05~01.11'
+    const weekPart = parts[2] ? parts[2].trim() : ''; // '2026-W02'
+
+    if (periodPart === '월누적') {
+      colMap[i] = { type: 'monthly', key: monthPart };
+      if (!monthly[monthPart]) monthly[monthPart] = newEmpty();
+    } else if (weekPart) {
+      // 주차 레이블 만들기: 'W02 (01.05~01.11)'
+      const wNum = weekPart.replace('2026-', '').replace('2027-', '');
+      const dateRange = periodPart.replace(/2026\./g, '').replace(/2027\./g, '');
+      const wKey = `${wNum} (${dateRange})`;
+      colMap[i] = { type: 'weekly', key: wKey };
+      if (!weekly[wKey]) weekly[wKey] = newEmpty();
+    }
+  });
+
+  function newEmpty() {
+    return { orders:0, urgent:0, noDeliver:0, quality:0, qty:0, ops:0, failCost:0, spend:0, persons:{} };
+  }
+
+  // 행 순회하며 값 채우기
+  let currentCategory = '';
+  rows.slice(1).forEach(row => {
+    const cat  = (row[0] || '').trim();
+    const item = (row[1] || '').trim();
+    if (cat) currentCategory = cat;
+    if (!item) return;
+
+    Object.entries(colMap).forEach(([idx, meta]) => {
+      const raw = (row[idx] || '').replace(/,/g, '');
+      const val = parseFloat(raw) || 0;
+      const target = meta.type === 'monthly' ? monthly[meta.key] : weekly[meta.key];
+      if (!target) return;
+
+      // 항목명 → 필드 매핑
+      if (item === '총 발주건수') target.orders = val;
+      else if (item === '긴급여부') target.urgent = val;
+      else if (item === '미입하 발생이력') target.noDeliver = val;
+      else if (item === '품질이슈') target.quality = val;
+      else if (item === '수량이슈') target.qty = val;
+      else if (item === '운영이슈') target.ops = val;
+      else if (item.includes('실패비용') && !item.includes('비교') && !item.includes('%')) target.failCost = val;
+      else if (item.includes('매입') || item.includes('지출')) target.spend = val;
+      // 담당자별 — 카테고리가 '담당자별'이거나 item이 사람 이름인 경우
+      else if (currentCategory.includes('담당자') || (cat === '' && item !== '' && !item.includes('KPI') && !item.includes('↔') && !item.includes('비교') && val > 0)) {
+        // 담당자 이름으로 추정되는 경우만
+        if (/^[가-힣]{2,5}$/.test(item) || item.includes('웨일즈')) {
+          target.persons[item] = (target.persons[item] || 0) + val;
+        }
+      }
+    });
+  });
+
+  // 0인 빈 주차 제거
+  const filteredWeekly = {};
+  Object.entries(weekly).forEach(([k,v]) => {
+    if (v.orders > 0 || v.urgent > 0 || v.quality > 0) filteredWeekly[k] = v;
+  });
+  const filteredMonthly = {};
+  Object.entries(monthly).forEach(([k,v]) => {
+    if (v.orders > 0) filteredMonthly[k] = v;
+  });
+
+  return { monthly: filteredMonthly, weekly: filteredWeekly };
+}
+
+// ─────────────────────────────────────────
+//  전역 상태
+// ─────────────────────────────────────────
 let mode = 'monthly';
-let orderChart = null, issueChart = null;
+let monthlyData = {};
+let weeklyData  = {};
+let orderChart  = null;
+let issueChart  = null;
 
+// ─────────────────────────────────────────
+//  데이터 로드
+// ─────────────────────────────────────────
+async function loadData() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Google Sheets에서 데이터를 불러오는 중...
+    </div>`;
+
+  try {
+    const rows = await fetchSheet(CONFIG.KPI_SHEET);
+    const parsed = parseKpiSheet(rows);
+
+    // 파싱 결과가 비어있으면 폴백 데이터 사용
+    monthlyData = Object.keys(parsed.monthly).length ? parsed.monthly : getFallback().monthly;
+    weeklyData  = Object.keys(parsed.weekly).length  ? parsed.weekly  : getFallback().weekly;
+
+    document.getElementById('lastUpdated').textContent =
+      '· ' + new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' }) + ' 업데이트';
+
+    buildUI();
+    buildSelect();
+    render();
+
+  } catch (e) {
+    document.getElementById('mainContent').innerHTML = `
+      <div class="error-box">
+        <strong>데이터 로드 실패</strong>
+        ${e.message}<br><br>
+        확인사항:<br>
+        1. 구글 시트가 <b>링크 공유(뷰어)</b> 상태인지 확인<br>
+        2. API 키가 <b>Google Sheets API</b>를 사용할 수 있는지 확인<br>
+        3. 시트 이름 <b>"${CONFIG.KPI_SHEET}"</b>이 정확한지 확인
+      </div>
+      <div style="text-align:center;padding:10px">
+        <button class="refresh-btn" onclick="loadData()" style="padding:8px 20px;font-size:13px">↺ 다시 시도</button>
+        &nbsp;
+        <button class="refresh-btn" onclick="useFallback()" style="padding:8px 20px;font-size:13px">샘플 데이터로 보기</button>
+      </div>`;
+  }
+}
+
+function useFallback() {
+  const fb = getFallback();
+  monthlyData = fb.monthly;
+  weeklyData  = fb.weekly;
+  document.getElementById('lastUpdated').textContent = '· 샘플 데이터';
+  buildUI();
+  buildSelect();
+  render();
+}
+
+// ─────────────────────────────────────────
+//  UI 골격 삽입
+// ─────────────────────────────────────────
+function buildUI() {
+  document.getElementById('mainContent').innerHTML = `
+    <div id="alertBox"></div>
+    <div class="cards" id="metricCards"></div>
+
+    <div class="section">
+      <div class="sec-title">발주건수 추이</div>
+      <div class="legend">
+        <span><b style="background:#378ADD"></b>발주건수</span>
+        <span><b style="background:#E24B4A"></b>긴급건수</span>
+        <span><b style="background:#EF9F27"></b>미입하</span>
+      </div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="orderChart" role="img" aria-label="발주건수, 긴급건수, 미입하 추이">발주 KPI 추이 차트</canvas>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="section">
+        <div class="sec-title">이슈 분포</div>
+        <div class="legend" id="issueLegend"></div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="issueChart" role="img" aria-label="이슈 유형 분포">이슈 분포 차트</canvas>
+        </div>
+      </div>
+      <div class="section">
+        <div class="sec-title">담당자별 발주</div>
+        <div id="personList"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title" id="tableTitle">상세 지표</div>
+      <div id="tableWrap"></div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────
+//  모드 & 선택창
+// ─────────────────────────────────────────
 function setMode(m, btn) {
   mode = m;
   document.querySelectorAll('.seg button').forEach(b => b.classList.remove('active'));
@@ -134,18 +326,23 @@ function setMode(m, btn) {
 
 function buildSelect() {
   const sel = document.getElementById('periodSel');
+  if (!sel) return;
   const keys = mode === 'monthly' ? Object.keys(monthlyData) : Object.keys(weeklyData);
   sel.innerHTML = '';
   const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = mode === 'monthly' ? '전체 월' : '전체 주차';
+  allOpt.value = 'all';
+  allOpt.textContent = mode === 'monthly' ? '전체 월' : '전체 주차';
   sel.appendChild(allOpt);
   keys.forEach(k => {
     const o = document.createElement('option');
     o.value = k; o.textContent = k; sel.appendChild(o);
   });
-  sel.value = keys[keys.length - 1];
+  if (keys.length) sel.value = keys[keys.length - 1];
 }
 
+// ─────────────────────────────────────────
+//  렌더링
+// ─────────────────────────────────────────
 function getSelected() {
   const v = document.getElementById('periodSel').value;
   const src = mode === 'monthly' ? monthlyData : weeklyData;
@@ -153,48 +350,54 @@ function getSelected() {
     const agg = { orders:0, urgent:0, noDeliver:0, quality:0, qty:0, ops:0, failCost:0, spend:0 };
     const persons = {};
     Object.values(src).forEach(d => {
-      Object.keys(agg).forEach(k => agg[k] += d[k] || 0);
-      if (d.persons) Object.entries(d.persons).forEach(([n,c]) => persons[n] = (persons[n]||0)+c);
+      Object.keys(agg).forEach(k => { agg[k] += (d[k] || 0); });
+      if (d.persons) Object.entries(d.persons).forEach(([n,c]) => { persons[n] = (persons[n]||0)+c; });
     });
     if (Object.keys(persons).length) agg.persons = persons;
     return { key: 'all', data: agg };
   }
-  const d = src[v];
-  return { key: v, data: { ...d } };
+  return { key: v, data: { ...(src[v] || {}) } };
 }
 
 function render() {
-  const { key, data } = getSelected();
+  if (!document.getElementById('metricCards')) return;
+  const { data } = getSelected();
   const src = mode === 'monthly' ? monthlyData : weeklyData;
-  const urgentRate = data.orders > 0 ? Math.round(data.urgent / data.orders * 100) : 0;
+  const urgentRate    = data.orders > 0 ? Math.round(data.urgent    / data.orders * 100) : 0;
   const noDeliverRate = data.orders > 0 ? Math.round(data.noDeliver / data.orders * 100) : 0;
   const qualityMatchRate = 81;
 
-  document.getElementById('alertBox').innerHTML = data.urgent > 100 ? `<div class="alert-box"><b>⚠ 긴급/미입하 동시 다발</b>긴급 ${data.urgent}건 · 미입하 ${data.noDeliver}건 · 실패비용 ${data.failCost.toLocaleString()}원</div>` : '';
+  // 알림 박스
+  document.getElementById('alertBox').innerHTML = data.urgent > 100
+    ? `<div class="alert-box"><strong>⚠ 긴급/미입하 동시 다발</strong>긴급 ${data.urgent}건 · 미입하 ${data.noDeliver}건 · 실패비용 ${(data.failCost||0).toLocaleString()}원</div>`
+    : '';
 
+  // 지표 카드
   document.getElementById('metricCards').innerHTML = [
-    ['총 발주건수', data.orders.toLocaleString(), '', 'neu'],
-    ['긴급건수', data.urgent.toLocaleString(), `긴급률 ${urgentRate}%`, urgentRate > 15 ? 'up' : 'down'],
-    ['미입하', data.noDeliver.toLocaleString(), `미입하율 ${noDeliverRate}%`, noDeliverRate > 2 ? 'up' : 'down'],
-    ['품질이슈', data.quality.toLocaleString(), `수량${data.qty} / 운영${data.ops}`, 'neu'],
-    ['실패비용', data.failCost > 0 ? data.failCost.toLocaleString()+'원' : '0원', data.failCost > 0 ? '발생' : '없음', data.failCost > 0 ? 'up' : 'neu'],
+    ['총 발주건수', (data.orders||0).toLocaleString(), '', 'neu'],
+    ['긴급건수', (data.urgent||0).toLocaleString(), `긴급률 ${urgentRate}%`, urgentRate > 15 ? 'up' : 'down'],
+    ['미입하', (data.noDeliver||0).toLocaleString(), `미입하율 ${noDeliverRate}%`, noDeliverRate > 2 ? 'up' : 'down'],
+    ['품질이슈', (data.quality||0).toLocaleString(), `수량${data.qty||0} / 운영${data.ops||0}`, 'neu'],
+    ['실패비용', (data.failCost||0) > 0 ? (data.failCost).toLocaleString()+'원' : '0원', (data.failCost||0) > 0 ? '발생' : '없음', (data.failCost||0) > 0 ? 'up' : 'neu'],
     ['품질 일치율', qualityMatchRate+'%', '등급 기준', qualityMatchRate >= 85 ? 'down' : 'up'],
-  ].map(([l, v, d, cls]) => `<div class="card"><div class="label">${l}</div><div class="val">${v}</div><div class="delta ${cls}">${d}</div></div>`).join('');
+  ].map(([l,v,d,cls]) =>
+    `<div class="card"><div class="label">${l}</div><div class="val">${v}</div><div class="delta ${cls}">${d}</div></div>`
+  ).join('');
 
-  const allKeys = Object.keys(src);
-  const labels = allKeys;
-  const ordersArr = allKeys.map(k => src[k].orders);
-  const urgentArr = allKeys.map(k => src[k].urgent);
-  const noDelArr  = allKeys.map(k => src[k].noDeliver);
+  // 발주 추이 차트
+  const allKeys   = Object.keys(src);
+  const ordersArr = allKeys.map(k => src[k].orders   || 0);
+  const urgentArr = allKeys.map(k => src[k].urgent    || 0);
+  const noDelArr  = allKeys.map(k => src[k].noDeliver || 0);
 
   if (orderChart) orderChart.destroy();
   orderChart = new Chart(document.getElementById('orderChart'), {
     type: 'bar',
     data: {
-      labels,
+      labels: allKeys,
       datasets: [
         { label:'발주건수', data: ordersArr, backgroundColor:'rgba(55,138,221,0.7)', borderRadius:3, order:3 },
-        { label:'긴급건수', data: urgentArr, backgroundColor:'rgba(226,75,74,0.8)', borderRadius:3, order:2 },
+        { label:'긴급건수', data: urgentArr, backgroundColor:'rgba(226,75,74,0.8)',  borderRadius:3, order:2 },
         { label:'미입하',   data: noDelArr,  backgroundColor:'rgba(239,159,39,0.8)', borderRadius:3, order:1 },
       ]
     },
@@ -202,23 +405,26 @@ function render() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { mode:'index' } },
       scales: {
-        x: { stacked: false, grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 30 } },
-        y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { font: { size: 10 } } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 35 } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10 } } }
       }
     }
   });
 
+  // 이슈 도넛
   const issueColors = ['#378ADD','#E24B4A','#EF9F27'];
-  const issueLabelNames = ['품질이슈','수량이슈','운영이슈'];
-  const issueVals = [data.quality, data.qty, data.ops];
-  document.getElementById('issueLegend').innerHTML = issueLabelNames.map((n,i) => `<span><b style="background:${issueColors[i]}"></b>${n} ${issueVals[i]}</span>`).join('');
+  const issueNames  = ['품질이슈','수량이슈','운영이슈'];
+  const issueVals   = [data.quality||0, data.qty||0, data.ops||0];
+  document.getElementById('issueLegend').innerHTML = issueNames.map((n,i) =>
+    `<span><b style="background:${issueColors[i]}"></b>${n} ${issueVals[i]}</span>`
+  ).join('');
 
   if (issueChart) issueChart.destroy();
   issueChart = new Chart(document.getElementById('issueChart'), {
     type: 'doughnut',
     data: {
-      labels: issueLabelNames,
-      datasets: [{ data: issueVals, backgroundColor: issueColors, borderWidth: 2, borderColor: 'transparent' }]
+      labels: issueNames,
+      datasets: [{ data: issueVals, backgroundColor: issueColors, borderWidth: 2, borderColor: '#fff' }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -227,34 +433,83 @@ function render() {
     }
   });
 
-  const persons = data.persons || { 육승미:550, 김민지:254, 신시어리웨일즈:117, 김하은:67, 김영준:49, 김민정:33, 이난영:1 };
-  const maxP = Math.max(...Object.values(persons));
+  // 담당자 바
+  const persons = (data.persons && Object.keys(data.persons).length)
+    ? data.persons
+    : { 육승미:550, 김민지:254, 신시어리웨일즈:117, 김하은:67, 김영준:49, 김민정:33, 이난영:1 };
+  const maxP = Math.max(...Object.values(persons), 1);
   document.getElementById('personList').innerHTML = Object.entries(persons)
     .sort(([,a],[,b]) => b - a)
-    .map(([n,c]) => `<div class="person-row"><span style="min-width:70px">${n}</span><div class="person-bar-bg"><div class="person-bar" style="width:${Math.round(c/maxP*100)}%"></div></div><span style="min-width:30px;text-align:right">${c}</span></div>`)
-    .join('');
+    .map(([n,c]) =>
+      `<div class="person-row">
+        <span style="min-width:72px;color:#444">${n}</span>
+        <div class="person-bar-bg"><div class="person-bar" style="width:${Math.round(c/maxP*100)}%"></div></div>
+        <span style="min-width:32px;text-align:right;font-weight:600">${c}</span>
+      </div>`
+    ).join('');
 
+  // 상세 테이블
   document.getElementById('tableTitle').textContent = mode === 'monthly' ? '월별 상세 지표' : '주차별 상세 지표';
   const rows = Object.entries(src).map(([k, d]) => {
-    const ur = d.orders > 0 ? Math.round(d.urgent/d.orders*100) : 0;
-    const nr = d.orders > 0 ? Math.round(d.noDeliver/d.orders*100) : 0;
+    const ur = (d.orders > 0) ? Math.round((d.urgent||0)/d.orders*100) : 0;
+    const nr = (d.orders > 0) ? Math.round((d.noDeliver||0)/d.orders*100) : 0;
     const uBadge = ur > 15 ? 'badge-danger' : ur > 10 ? 'badge-warn' : 'badge-ok';
-    const nBadge = nr > 2 ? 'badge-warn' : 'badge-ok';
+    const nBadge = nr > 2  ? 'badge-warn'   : 'badge-ok';
     return `<tr>
       <td>${k}</td>
-      <td>${d.orders.toLocaleString()}</td>
-      <td><span class="badge ${uBadge}">${d.urgent} (${ur}%)</span></td>
-      <td><span class="badge ${nBadge}">${d.noDeliver} (${nr}%)</span></td>
-      <td>${d.quality}</td>
-      <td>${d.failCost > 0 ? d.failCost.toLocaleString()+'원' : '-'}</td>
+      <td>${(d.orders||0).toLocaleString()}</td>
+      <td><span class="badge ${uBadge}">${d.urgent||0} (${ur}%)</span></td>
+      <td><span class="badge ${nBadge}">${d.noDeliver||0} (${nr}%)</span></td>
+      <td>${d.quality||0}</td>
+      <td>${(d.failCost||0) > 0 ? (d.failCost).toLocaleString()+'원' : '-'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('tableWrap').innerHTML = `<table class="week-table">
-    <thead><tr><th>${mode === 'monthly' ? '월' : '주차'}</th><th>발주건수</th><th>긴급</th><th>미입하</th><th>품질이슈</th><th>실패비용</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  document.getElementById('tableWrap').innerHTML = `
+    <table class="week-table">
+      <thead><tr>
+        <th>${mode === 'monthly' ? '월' : '주차'}</th>
+        <th>발주건수</th><th>긴급</th><th>미입하</th><th>품질이슈</th><th>실패비용</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
-buildSelect();
-render();
+// ─────────────────────────────────────────
+//  폴백 샘플 데이터
+// ─────────────────────────────────────────
+function getFallback() {
+  return {
+    monthly: {
+      '1월': { orders:1071, urgent:101, noDeliver:20, quality:49, qty:3, ops:2, failCost:1033780, spend:6100000, persons:{김영준:49,김민정:33,김하은:67,이난영:1,김민지:254,육승미:550,신시어리웨일즈:117} },
+      '2월': { orders:668,  urgent:75,  noDeliver:5,  quality:20, qty:2, ops:1, failCost:321000,  spend:3900000, persons:{김영준:27,김민정:21,김하은:29,이난영:0, 김민지:137,육승미:376,신시어리웨일즈:78} },
+      '3월': { orders:1155, urgent:151, noDeliver:25, quality:29, qty:3, ops:2, failCost:580000,  spend:5800000, persons:{김영준:45,김민정:50,김하은:73,이난영:45,김민지:325,육승미:476,신시어리웨일즈:141} },
+      '4월': { orders:297,  urgent:49,  noDeliver:2,  quality:7,  qty:0, ops:0, failCost:80500,   spend:1200000, persons:{김영준:5, 김민정:14,김하은:13,이난영:32,김민지:135,육승미:44, 신시어리웨일즈:53} },
+    },
+    weekly: {
+      'W02 (01.05~01.11)': { orders:282, urgent:13, noDeliver:4, quality:12, qty:1, ops:0, failCost:0,     spend:0 },
+      'W03 (01.12~01.18)': { orders:346, urgent:66, noDeliver:9, quality:17, qty:1, ops:1, failCost:80500, spend:0 },
+      'W04 (01.19~01.25)': { orders:235, urgent:16, noDeliver:3, quality:12, qty:1, ops:1, failCost:0,     spend:0 },
+      'W05 (01.26~02.01)': { orders:208, urgent:6,  noDeliver:4, quality:8,  qty:0, ops:0, failCost:0,     spend:0 },
+      'W06 (02.02~02.08)': { orders:191, urgent:23, noDeliver:2, quality:5,  qty:0, ops:0, failCost:0,     spend:0 },
+      'W07 (02.09~02.15)': { orders:185, urgent:19, noDeliver:0, quality:8,  qty:1, ops:0, failCost:0,     spend:0 },
+      'W08 (02.16~02.22)': { orders:109, urgent:8,  noDeliver:0, quality:3,  qty:0, ops:0, failCost:0,     spend:0 },
+      'W09 (02.23~03.01)': { orders:183, urgent:25, noDeliver:3, quality:4,  qty:1, ops:1, failCost:0,     spend:0 },
+      'W10 (03.02~03.08)': { orders:203, urgent:39, noDeliver:4, quality:3,  qty:0, ops:0, failCost:0,     spend:0 },
+      'W11 (03.09~03.15)': { orders:259, urgent:7,  noDeliver:7, quality:5,  qty:1, ops:1, failCost:0,     spend:0 },
+      'W12 (03.16~03.22)': { orders:218, urgent:33, noDeliver:6, quality:10, qty:1, ops:1, failCost:0,     spend:0 },
+      'W13 (03.23~03.29)': { orders:215, urgent:20, noDeliver:4, quality:3,  qty:0, ops:0, failCost:0,     spend:0 },
+      'W14 (03.30~04.05)': { orders:260, urgent:52, noDeliver:4, quality:8,  qty:1, ops:0, failCost:0,     spend:0 },
+      'W15 (04.06~04.12)': { orders:196, urgent:40, noDeliver:2, quality:7,  qty:0, ops:0, failCost:80500, spend:0 },
+      'W16 (04.13~04.19)': { orders:101, urgent:9,  noDeliver:0, quality:0,  qty:0, ops:0, failCost:0,     spend:0 },
+    }
+  };
+}
+
+// 시작
+loadData();
+
+// 자동 갱신 — 5분마다 데이터 새로고침 (변경하려면 숫자 수정: 1분=60000, 5분=300000, 10분=600000)
+setInterval(loadData, 300000);
 </script>
+</body>
+</html>
